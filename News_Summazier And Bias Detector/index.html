@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>News Summarizer & Bias Detector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class'
+    }
+  </script>
+  <style>
+    .loading-spinner { border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 dark:from-gray-900 dark:via-gray-800 dark:to-black flex items-center justify-center p-6 transition-colors">
+
+  <div class="w-full max-w-5xl">
+    <!-- Header -->
+    <header class="text-center mb-10 relative">
+      <h1 class="text-white dark:text-gray-100 text-5xl font-extrabold drop-shadow-lg">📰 News Summarizer</h1>
+      <p class="text-white/90 dark:text-gray-300 mt-3 text-lg">Paste article text or a URL — get AI summary, bias score, and tone insights.</p>
+      <!-- Dark Mode Toggle -->
+      <button id="theme-toggle" class="absolute right-4 top-2 px-3 py-2 rounded-xl bg-white/70 dark:bg-gray-800 dark:text-gray-100 text-gray-900 shadow hover:scale-105 transition">
+        🌙 Dark
+      </button>
+    </header>
+
+    <!-- Main Card -->
+    <div class="bg-white/20 dark:bg-gray-900/50 backdrop-blur-lg rounded-2xl shadow-2xl p-8 text-gray-900 dark:text-gray-100">
+      <!-- Tabs -->
+      <div class="flex gap-4 mb-6 justify-center">
+        <button id="url-tab" class="px-5 py-2 rounded-xl bg-blue-600 text-white font-medium shadow hover:scale-105 transition">🌐 URL Input</button>
+        <button id="text-tab" class="px-5 py-2 rounded-xl bg-white/80 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium shadow hover:scale-105 transition">✍️ Paste Text</button>
+      </div>
+
+      <!-- Inputs -->
+      <div id="url-input" class="mb-6 block">
+        <input id="article-url" type="url" placeholder="🔗 Enter article URL..." class="w-full p-4 rounded-xl border border-gray-300 dark:border-gray-600 shadow focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-800 dark:text-gray-100"/>
+      </div>
+
+      <div id="text-input" class="mb-6 hidden">
+        <textarea id="article-text" rows="8" placeholder="✍️ Paste article text here..." class="w-full p-4 rounded-xl border border-gray-300 dark:border-gray-600 shadow focus:ring-2 focus:ring-blue-500 focus:outline-none dark:bg-gray-800 dark:text-gray-100"></textarea>
+      </div>
+
+      <!-- Tone -->
+      <div class="mb-6">
+        <label class="block mb-3 font-semibold text-white dark:text-gray-200 text-lg">Summary Style</label>
+        <div class="flex flex-wrap gap-3">
+          <label class="cursor-pointer px-4 py-2 rounded-xl bg-white/70 dark:bg-gray-700 hover:bg-blue-100 transition">
+            <input type="radio" name="tone" value="neutral" checked class="mr-2"> Neutral
+          </label>
+          <label class="cursor-pointer px-4 py-2 rounded-xl bg-white/70 dark:bg-gray-700 hover:bg-blue-100 transition">
+            <input type="radio" name="tone" value="facts" class="mr-2"> Facts Only
+          </label>
+          <label class="cursor-pointer px-4 py-2 rounded-xl bg-white/70 dark:bg-gray-700 hover:bg-blue-100 transition">
+            <input type="radio" name="tone" value="simple" class="mr-2"> Simple (10yo)
+          </label>
+        </div>
+      </div>
+
+      <!-- Analyze Button -->
+      <button id="analyze-btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white py-4 rounded-xl font-semibold shadow-lg hover:scale-[1.02] transition">
+        🚀 Analyze Article
+      </button>
+
+      <!-- Results -->
+      <div id="results-section" class="mt-8 hidden">
+        <div id="loading" class="flex items-center justify-center gap-3 mb-6">
+          <div class="loading-spinner"></div>
+          <div class="text-white dark:text-gray-200 text-lg font-medium">Analyzing article with Gemini...</div>
+        </div>
+
+        <div id="results-card" class="hidden fade-in bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 space-y-6">
+          <!-- Bias -->
+          <div>
+            <h3 class="font-bold text-lg">🎯 Bias Analysis</h3>
+            <div class="mt-3 bg-gray-200 dark:bg-gray-700 h-3 rounded-full overflow-hidden">
+              <div id="bias-meter" class="h-3 bg-gradient-to-r from-blue-500 via-gray-400 to-red-500 transition-all duration-700" style="width:50%"></div>
+            </div>
+            <p id="bias-score" class="mt-2 text-sm text-gray-700 dark:text-gray-300"></p>
+          </div>
+
+          <!-- Summary -->
+          <div>
+            <h3 class="font-bold text-lg">📝 AI Summary</h3>
+            <div id="summary-content" class="mt-2 text-gray-800 dark:text-gray-200 leading-relaxed"></div>
+          </div>
+
+          <!-- Key points -->
+          <div>
+            <h3 class="font-bold text-lg">🔑 Key Points</h3>
+            <ul id="key-points" class="list-disc pl-5 text-gray-800 dark:text-gray-200 mt-2 space-y-1"></ul>
+          </div>
+
+          <!-- Tone Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-xl shadow text-center">
+              <div id="emotional-score" class="text-xl font-bold text-blue-700 dark:text-blue-300">0%</div>
+              <div class="text-sm text-gray-600 dark:text-gray-300">Emotional</div>
+            </div>
+            <div class="p-4 bg-purple-50 dark:bg-purple-900 rounded-xl shadow text-center">
+              <div id="subjective-score" class="text-xl font-bold text-purple-700 dark:text-purple-300">0%</div>
+              <div class="text-sm text-gray-600 dark:text-gray-300">Subjective</div>
+            </div>
+            <div class="p-4 bg-green-50 dark:bg-green-900 rounded-xl shadow text-center">
+              <div id="positive-score" class="text-xl font-bold text-green-700 dark:text-green-300">0%</div>
+              <div class="text-sm text-gray-600 dark:text-gray-300">Positive</div>
+            </div>
+            <div class="p-4 bg-red-50 dark:bg-red-900 rounded-xl shadow text-center">
+              <div id="negative-score" class="text-xl font-bold text-red-700 dark:text-red-300">0%</div>
+              <div class="text-sm text-gray-600 dark:text-gray-300">Negative</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Tab logic
+  const urlTab = document.getElementById("url-tab");
+  const textTab = document.getElementById("text-tab");
+  const urlInput = document.getElementById("url-input");
+  const textInput = document.getElementById("text-input");
+  const analyzeBtn = document.getElementById("analyze-btn");
+  const resultsSection = document.getElementById("results-section");
+  const loading = document.getElementById("loading");
+  const resultsCard = document.getElementById("results-card");
+
+  urlTab.addEventListener("click", () => {
+    urlTab.classList.add("bg-blue-600","text-white");
+    textTab.classList.remove("bg-blue-600","text-white");
+    urlInput.classList.remove("hidden");
+    textInput.classList.add("hidden");
+  });
+
+  textTab.addEventListener("click", () => {
+    textTab.classList.add("bg-blue-600","text-white");
+    urlTab.classList.remove("bg-blue-600","text-white");
+    textInput.classList.remove("hidden");
+    urlInput.classList.add("hidden");
+  });
+
+  // Analyze
+  analyzeBtn.addEventListener("click", async () => {
+    const articleUrl = document.getElementById("article-url").value.trim();
+    const articleText = document.getElementById("article-text").value.trim();
+    const tone = document.querySelector("input[name='tone']:checked").value;
+
+    const isUrl = articleUrl.length > 0;
+    if (!isUrl && articleText.length === 0) {
+      alert("Please provide a URL or paste article text.");
+      return;
+    }
+
+    resultsSection.classList.remove("hidden");
+    loading.classList.remove("hidden");
+    resultsCard.classList.add("hidden");
+
+    try {
+      const body = { content: isUrl ? articleUrl : articleText, isUrl: isUrl, tone: tone };
+      const resp = await fetch("/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await resp.json();
+      loading.classList.add("hidden");
+
+      if (data.error) {
+        alert("Analysis error: " + data.error + (data.model_output ? ("\nModel output: " + data.model_output) : ""));
+        return;
+      }
+
+      document.getElementById("bias-meter").style.width = `${data.biasPosition}%`;
+      document.getElementById("bias-score").textContent = `${data.biasText} (Score: ${data.biasScore})`;
+      document.getElementById("summary-content").textContent = data.summary;
+
+      const kp = document.getElementById("key-points");
+      kp.innerHTML = "";
+      (data.keyPoints || []).forEach(pt => {
+        const li = document.createElement("li");
+        li.textContent = pt;
+        kp.appendChild(li);
+      });
+
+      document.getElementById("emotional-score").textContent = `${data.tones.emotional}%`;
+      document.getElementById("subjective-score").textContent = `${data.tones.subjective}%`;
+      document.getElementById("positive-score").textContent = `${data.tones.positive}%`;
+      document.getElementById("negative-score").textContent = `${data.tones.negative}%`;
+
+      resultsCard.classList.remove("hidden");
+    } catch (err) {
+      loading.classList.add("hidden");
+      alert("Request failed: " + err.message);
+    }
+  });
+
+  // Dark mode toggle
+  const themeToggle = document.getElementById("theme-toggle");
+  const rootEl = document.documentElement;
+
+  // load user preference
+  if (localStorage.getItem("theme") === "light") {
+    rootEl.classList.remove("dark");
+    themeToggle.textContent = "🌙 Dark";
+  } else {
+    rootEl.classList.add("dark");
+    themeToggle.textContent = "☀️ Light";
+  }
+
+  themeToggle.addEventListener("click", () => {
+    if (rootEl.classList.contains("dark")) {
+      rootEl.classList.remove("dark");
+      localStorage.setItem("theme","light");
+      themeToggle.textContent = "🌙 Dark";
+    } else {
+      rootEl.classList.add("dark");
+      localStorage.setItem("theme","dark");
+      themeToggle.textContent = "☀️ Light";
+    }
+  });
+</script>
+</body>
+</html>
