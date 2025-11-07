@@ -1,0 +1,110 @@
+🎬 Movie Recommendation System (Content-based Filtering)
+📌 Project Overview
+
+This project implements a Movie Recommendation System using content-based filtering.
+It suggests movies similar to a given movie by analyzing their genres and computing similarity using cosine similarity.
+
+The project is designed as a mini social media/movie suggestion system, where recommendations are based on shared content preferences.
+
+📊 Dataset
+
+We used the MovieLens Dataset (movie.csv) which contains:
+
+movieId → Unique ID of each movie
+
+title → Movie name (e.g., Toy Story (1995))
+
+genres → Pipe-separated genres (e.g., Adventure|Animation|Children|Comedy|Fantasy)
+
+📌 Dataset Shape: (10329, 3)
+
+🛠️ Skills Covered
+
+Data Preprocessing (handling missing values, parsing genres)
+
+Feature Engineering (converting genres into feature vectors)
+
+Cosine Similarity (measuring closeness between movies)
+
+Pandas & NumPy (data manipulation)
+
+Visualization with Seaborn & Matplotlib
+
+🚀 Features
+
+✔️ Suggests movies based on similar genres
+✔️ Uses cosine similarity to measure closeness
+✔️ Heatmap visualization of movie similarities
+✔️ Modular function recommend_movies(movie_title, top_n)
+
+📂 Project Structure
+social media/
+│── movie.csv                  # Dataset
+│── social_media_suggester.py  # Main Python script
+│── README.md                  # Documentation
+
+⚙️ How It Works
+
+Load movie.csv dataset.
+
+Clean and preprocess the genres column.
+
+Use CountVectorizer to convert genres into feature vectors.
+
+Compute cosine similarity between all movies.
+
+For a given movie, return the Top-N most similar movies.
+
+Visualize similarity matrix using heatmap.
+
+🖥️ Example Usage
+# Recommend movies similar to "Toy Story (1995)"
+print(recommend_movies("Toy Story (1995)", top_n=5))
+
+✅ Sample Output:
+Recommended Movies for Toy Story (1995): 
+['Jumanji (1995)', 'Balto (1995)', 'Lion King, The (1994)', 'Aladdin (1992)', '101 Dalmatians (1996)']
+
+📊 Visualization
+
+The system also generates a heatmap of similarities (first 20 movies):
+
+Darker colors = higher similarity
+
+Lighter colors = less similar
+
+🛠️ Installation & Setup
+
+Clone or download this project folder.
+
+Open terminal in the project folder.
+
+Install dependencies:
+
+pip install pandas numpy scikit-learn matplotlib seaborn
+
+
+Run the script:
+
+python social_media_suggester.py
+
+🔮 Future Improvements
+
+Add movie tags, cast, and director for better accuracy
+
+Implement collaborative filtering (recommend based on user ratings)
+
+Build a web app with Streamlit or Flask for interactive recommendations
+
+Integrate with a social media-style system (users + friends + shared interests)
+
+📌 Conclusion
+
+This project demonstrates the core concepts of recommendation systems using a real-world dataset.
+It can be extended to social media platforms to suggest:
+
+Friends (based on common interests)
+
+Content/Posts (based on user activity)
+
+Movies/Pages (based on preferences)
